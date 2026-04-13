@@ -2,14 +2,9 @@ using UnityEngine;
 
 public class LineOfSight : MonoBehaviour
 {
-    [SerializeField]
-    private int distance;
-
-    [SerializeField]
-    private int angle;
-
-    [SerializeField]
-    private LayerMask layerMask;
+    [SerializeField] private int distance;
+    [SerializeField] private int angle;
+    [SerializeField] private LayerMask layerMask;
 
     public bool isInRange(Transform self, Transform target)
     {

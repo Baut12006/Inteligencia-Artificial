@@ -1,3 +1,4 @@
+using UnityEditor.Search;
 using UnityEngine;
 
 public class FSM_Classes : MonoBehaviour
@@ -6,7 +7,7 @@ public class FSM_Classes : MonoBehaviour
 
     private PatrolState patrolState;
     private PursuitState pursuitState;
-
+    private SearchState searchState;
     private void Awake()
     {
         patrolState = new PatrolState(this);
@@ -29,7 +30,10 @@ public class FSM_Classes : MonoBehaviour
     {
         ChangeState(pursuitState);
     }
-
+    public void ChangeToSearch()
+    {
+        ChangeState(searchState);
+    }
     private void ChangeState(State newState)
     {
         if (CurrentState == newState)
@@ -106,5 +110,22 @@ public class PursuitState : State
     public override void Exit()
     {
         Debug.Log("Exiting Pursuit");
+    }
+}
+
+public class SearchState : State
+{
+    public SearchState(FSM_Classes fsm) : base(fsm) { }
+    public override void Enter()
+    {
+        Debug.Log("Entering Search");
+    }
+    public override void Update(bool canSeePlayer)
+    {
+        
+    }
+    public override void Exit()
+    {
+        Debug.Log("Exiting Search");
     }
 }

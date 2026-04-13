@@ -5,9 +5,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private PlayerModel model;
     private void Awake()
     {
-        GetComponent<PlayerModel>();
+        model = GetComponent<PlayerModel>();
     }
-
     // Update is called once per frame
     void Update()
     {

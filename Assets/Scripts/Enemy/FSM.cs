@@ -5,7 +5,8 @@ public class FSM : MonoBehaviour
     public enum EnemyState
     {
         Patrol,
-        Pursuit
+        Pursuit,
+        Search
     }
 
     public EnemyState currentState = EnemyState.Patrol;
@@ -28,8 +29,18 @@ public class FSM : MonoBehaviour
 
                 if (!canSeePlayer)
                 {
-                    currentState = EnemyState.Patrol;
-                    Debug.Log("Switch to Patrol");
+                    currentState = EnemyState.Search; 
+                    Debug.Log("Switch to Search");
+                }
+
+                break;
+
+            case EnemyState.Search:
+
+                if (canSeePlayer)
+                {
+                    currentState = EnemyState.Pursuit;
+                    Debug.Log("Switch to Pursuit");
                 }
 
                 break;
