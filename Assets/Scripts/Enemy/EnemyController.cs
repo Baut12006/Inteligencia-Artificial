@@ -2,22 +2,30 @@ using UnityEngine;
 
 public class EnemyController : MonoBehaviour
 {
+    [Header("Configuration")]
+    [SerializeField] private EnemyData config;
+
     [Header("References")]
     [SerializeField] private Transform player;
     [SerializeField] private LineOfSight los;
     [SerializeField] private FSM fsm;
-    [SerializeField] private Transform[] patrolPoints;
+    [SerializeField] private PatrolRoute patrolRoute;
+    [SerializeField] private Light visionLight;
+    [SerializeField] private float alertRadius = 10f;
 
     private PlayerModel playerModel;
     private Vector3 lastKnownPosition;
-    private float closeDetectionRange = 3f;
     private Rigidbody rb;
-
-    [Header("Movement")]
-    [SerializeField] private float speed = 3f;
-    [SerializeField] private float rotationSpeed = 5f;
+    private Camera mainCamera;
 
     private int currentPoint = 0;
+    private float waypointReachedDistanceSqr = 0.25f;
+    private float closeDetectionRangeSqr;
+    private float searchTimer = 0f;
+
+    [Header("Light Culling")]
+    private Color originalLightColor;
+    [SerializeField] private float lightCullingDistance = 30f;
 
     void Awake()
     {
@@ -27,35 +35,137 @@ public class EnemyController : MonoBehaviour
         if (fsm == null)
             fsm = GetComponent<FSM>();
 
-        playerModel = player.GetComponent<PlayerModel>();
+        if (player != null)
+            playerModel = player.GetComponent<PlayerModel>();
+
         rb = GetComponent<Rigidbody>();
+        mainCamera = Camera.main;
+
+        if (config != null)
+        {
+            closeDetectionRangeSqr = config.closeDetectionRange * config.closeDetectionRange;
+        }
+
+        SetupVisionLight();
+        
+        if (config != null && config.isSentry)
+        {
+            SetupSentryVision();
+        }
+    }
+
+    void SetupVisionLight()
+    {
+        originalLightColor = config.visionLightColor;
+        if (config == null || !config.showVisionLight)
+            return;
+
+        if (visionLight == null)
+        {
+            GameObject lightObj = new GameObject("VisionLight");
+            lightObj.transform.SetParent(transform);
+            lightObj.transform.localPosition = Vector3.zero;
+            lightObj.transform.localRotation = Quaternion.Euler(90, 0, 0);
+            
+            visionLight = lightObj.AddComponent<Light>();
+        }
+
+        visionLight.type = LightType.Spot;
+        visionLight.range = los.GetDistance();
+        visionLight.spotAngle = config.isSentry ? config.sentryViewAngle : los.GetAngle();
+        visionLight.intensity = config.lightIntensity;
+        visionLight.color = config.visionLightColor;
+        visionLight.enabled = true;
+        
+        visionLight.shadows = LightShadows.None;
+        visionLight.renderMode = LightRenderMode.ForcePixel;
+        visionLight.cullingMask = LayerMask.GetMask("Default");
+        
+        visionLight.innerSpotAngle = visionLight.spotAngle * 0.8f;
+    }
+
+    void SetupSentryVision()
+    {
+        if (los != null)
+        {
+            los.SetAngleOverride(config.sentryViewAngle);
+        }
     }
 
     void Update()
     {
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        if (config == null || player == null || playerModel == null)
+            return;
+
+        UpdateLightVisibility();
+
+        float sqrDistanceToPlayer = (transform.position - player.position).sqrMagnitude;
         
-        bool normalVision =
-            los.isInRange(transform, player)
-            && los.isInAngle(transform, player)
-            && los.hasLineOfSight(transform, player);
+        bool normalVision = CheckNormalVision();
+        bool isCloseEnough = sqrDistanceToPlayer <= closeDetectionRangeSqr;
 
-        bool isCloseEnough = distanceToPlayer <= closeDetectionRange;
-
-        bool canSeePlayer = (normalVision && !playerModel.IsInShadow) || isCloseEnough;
+        bool canSeePlayer = CanDetectPlayer(normalVision, isCloseEnough);
 
         if (canSeePlayer)
         {
             lastKnownPosition = player.position;
+            searchTimer = config.searchDuration;
+
+            if (config.isSentry)
+            {
+                AlertNearbyEnemies();
+            }
         }
 
-        fsm.UpdateState(canSeePlayer);
+        fsm.UpdateState(canSeePlayer, config.isSentry);
 
         ExecuteState();
     }
 
+    bool CheckNormalVision()
+    {
+        bool inRange = config.requiresRangeCheck ? los.isInRange(transform, player) : true;
+        bool inAngle = config.requiresAngleCheck ? los.isInAngle(transform, player) : true;
+        bool hasLOS = config.requiresLineOfSight ? los.hasLineOfSight(transform, player) : true;
+
+        return inRange && inAngle && hasLOS;
+    }
+
+    void UpdateLightVisibility()
+    {
+        if (!config.showVisionLight || visionLight == null || mainCamera == null)
+            return;
+
+        float sqrDistanceToCamera = (transform.position - mainCamera.transform.position).sqrMagnitude;
+        float cullingDistanceSqr = lightCullingDistance * lightCullingDistance;
+
+        visionLight.enabled = sqrDistanceToCamera <= cullingDistanceSqr;
+    }
+
+    bool CanDetectPlayer(bool normalVision, bool isCloseEnough)
+    {
+        if (config == null)
+            return false;
+
+        bool shadowCheck = config.canSeeInShadows || !playerModel.IsInShadow;
+        return (normalVision && shadowCheck) || isCloseEnough;
+    }
+    void UpdateLightColor()
+    {
+        if (visionLight == null || config == null) return;
+
+        if (config.isSentry && fsm.currentState == FSM.EnemyState.Alert)
+        {
+            visionLight.color = Color.red;
+        }
+        else
+        {
+            visionLight.color = originalLightColor;
+        }
+    }
     void ExecuteState()
     {
+        UpdateLightColor();
         switch (fsm.currentState)
         {
             case FSM.EnemyState.Patrol:
@@ -66,6 +176,10 @@ public class EnemyController : MonoBehaviour
                 PursuePlayer();
                 break;
 
+            case FSM.EnemyState.Alert:
+                Alert();
+                break;
+
             case FSM.EnemyState.Search:
                 Search();
                 break;
@@ -74,56 +188,178 @@ public class EnemyController : MonoBehaviour
 
     void Patrol()
     {
-        Transform target = patrolPoints[currentPoint];
-
-        Vector3 dir = target.position - transform.position;
-        dir.y = 0;
-
-        if (dir.magnitude < 0.5f)
+        if (config.isSentry)
         {
-            currentPoint = (currentPoint + 1) % patrolPoints.Length;
+            SentryPatrol();
             return;
         }
 
-        Move(dir);
+        if (!config.canPatrol || patrolRoute == null || patrolRoute.WaypointCount == 0)
+            return;
+
+        Vector3 targetPosition = patrolRoute.GetWaypoint(currentPoint);
+
+        Vector3 dir = targetPosition - transform.position;
+        dir.y = 0;
+
+        if (dir.sqrMagnitude < waypointReachedDistanceSqr)
+        {
+            currentPoint = (currentPoint + 1) % patrolRoute.WaypointCount;
+            return;
+        }
+
+        Move(dir, config.patrolSpeed);
+    }
+
+    void SentryPatrol()
+    {
+        float rotationAmount = config.sentryRotationSpeed * Time.deltaTime;
+        transform.Rotate(0, rotationAmount, 0);
     }
 
     void PursuePlayer()
     {
+        if (!config.canPursue)
+            return;
+
         Vector3 dir = player.position - transform.position;
         dir.y = 0;
 
-        Move(dir);
+        Move(dir, config.pursuitSpeed);
+    }
+
+    void Alert()
+    {
+        Vector3 dirToPlayer = player.position - transform.position;
+        dirToPlayer.y = 0;
+
+        if (dirToPlayer.sqrMagnitude > 0.01f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(dirToPlayer);
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                targetRotation,
+                Time.deltaTime * config.rotationSpeed
+            );
+        }
     }
 
     void Search()
     {
-        Vector3 dir = lastKnownPosition - transform.position;
-        dir.y = 0;
+        searchTimer -= Time.deltaTime;
 
-        if (dir.magnitude < 0.5f)
+        if (searchTimer <= 0f)
         {
             fsm.currentState = FSM.EnemyState.Patrol;
             return;
         }
 
-        Move(dir);
+        if (config.isSentry)
+        {
+            SentrySearch();
+            return;
+        }
 
+        Vector3 dir = lastKnownPosition - transform.position;
+        dir.y = 0;
+
+        if (dir.sqrMagnitude < waypointReachedDistanceSqr)
+        {
+            return;
+        }
+
+        Move(dir, config.patrolSpeed);
     }
 
-    void Move(Vector3 dir)
+    void SentrySearch()
+    {
+        Vector3 dirToLastKnown = lastKnownPosition - transform.position;
+        dirToLastKnown.y = 0;
+
+        if (dirToLastKnown.sqrMagnitude > 0.01f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(dirToLastKnown);
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                targetRotation,
+                Time.deltaTime * config.rotationSpeed * 0.5f
+            );
+        }
+    }
+    public void ReceiveAlert(Vector3 alertPosition)
+    {
+        lastKnownPosition = alertPosition;
+        searchTimer = config.searchDuration;
+
+        if (fsm.currentState != FSM.EnemyState.Pursuit)
+        {
+            fsm.currentState = FSM.EnemyState.Search;
+        }
+    }
+    void AlertNearbyEnemies()
+    {
+        Collider[] hits = Physics.OverlapSphere(transform.position, alertRadius);
+
+        foreach (var hit in hits)
+        {
+            EnemyController enemy = hit.GetComponent<EnemyController>();
+
+            if (enemy != null && enemy != this)
+            {
+                enemy.ReceiveAlert(lastKnownPosition);
+            }
+        }
+    }
+
+    void Move(Vector3 dir, float moveSpeed)
     {
         Vector3 moveDir = dir.normalized;
 
-        Vector3 newPosition = rb.position + moveDir * speed * Time.deltaTime;
+        Vector3 newPosition = rb.position + moveDir * moveSpeed * Time.deltaTime;
         rb.MovePosition(newPosition);
 
         Vector3 newForward = Vector3.Lerp(
             transform.forward,
             moveDir,
-            Time.deltaTime * rotationSpeed
+            Time.deltaTime * config.rotationSpeed
         );
 
         rb.MoveRotation(Quaternion.LookRotation(newForward));
+    }
+
+    void OnValidate()
+    {
+        if (Application.isPlaying && visionLight != null && config != null)
+        {
+            SetupVisionLight();
+        }
+    }
+
+    void OnDrawGizmos()
+    {
+        if (config == null)
+            return;
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, config.closeDetectionRange);
+
+        if (patrolRoute != null && patrolRoute.WaypointCount > 0 && !config.isSentry)
+        {
+            Gizmos.color = Color.cyan;
+            for (int i = 0; i < patrolRoute.WaypointCount; i++)
+            {
+                Vector3 waypoint = patrolRoute.GetWaypoint(i);
+                Gizmos.DrawWireSphere(waypoint, 0.5f);
+
+                Vector3 nextWaypoint = patrolRoute.GetWaypoint(i + 1);
+                Gizmos.DrawLine(waypoint, nextWaypoint);
+            }
+        }
+
+        if (config.isSentry)
+        {
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawWireSphere(transform.position, 1f);
+        }
     }
 }

@@ -6,12 +6,13 @@ public class FSM : MonoBehaviour
     {
         Patrol,
         Pursuit,
-        Search
+        Search,
+        Alert,
     }
 
     public EnemyState currentState = EnemyState.Patrol;
 
-    public void UpdateState(bool canSeePlayer)
+    public void UpdateState(bool canSeePlayer, bool isSentry = false)
     {
         switch (currentState)
         {
@@ -19,7 +20,7 @@ public class FSM : MonoBehaviour
 
                 if (canSeePlayer)
                 {
-                    currentState = EnemyState.Pursuit;
+                    currentState = isSentry ? EnemyState.Alert : EnemyState.Pursuit;
                     Debug.Log("Switch to Pursuit");
                 }
 
@@ -29,7 +30,7 @@ public class FSM : MonoBehaviour
 
                 if (!canSeePlayer)
                 {
-                    currentState = EnemyState.Search; 
+                    currentState = EnemyState.Search;
                     Debug.Log("Switch to Search");
                 }
 
@@ -39,11 +40,23 @@ public class FSM : MonoBehaviour
 
                 if (canSeePlayer)
                 {
-                    currentState = EnemyState.Pursuit;
+                    currentState = isSentry ? EnemyState.Alert : EnemyState.Pursuit;
                     Debug.Log("Switch to Pursuit");
                 }
 
                 break;
+
+            case EnemyState.Alert:
+
+                if (!canSeePlayer)
+                {
+                    currentState = EnemyState.Search;
+                    Debug.Log("Switch to Alert");
+                }
+
+                break;
+
         }
     }
+    
 }
