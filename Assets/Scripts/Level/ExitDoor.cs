@@ -99,11 +99,11 @@ public class ExitDoor : MonoBehaviour
 
         if (enemiesRemaining > 0)
         {
-            warningText.text = $"¡Elimina a los {enemiesRemaining} enemigos restantes!";
+            warningText.text = $"Eliminate the {enemiesRemaining} remaining enemies!";
         }
         else
         {
-            warningText.text = "¡Puerta cerrada!";
+            warningText.text = "Door closed!";
         }
 
         warningText.gameObject.SetActive(true);
