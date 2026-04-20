@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   enemyTypeName: Sentry
   canSeeInShadows: 0
-  closeDetectionRange: 3
+  closeDetectionRange: 1
   requiresLineOfSight: 1
   requiresAngleCheck: 1
   requiresRangeCheck: 1
@@ -25,8 +25,8 @@ MonoBehaviour:
   canPursue: 0
   searchDuration: 5
   visionLightColor: {r: 1, g: 0.015686274, b: 0.65444595, a: 1}
-  lightIntensity: 3
+  lightIntensity: 10
   showVisionLight: 1
   isSentry: 1
   sentryRotationSpeed: 50
-  sentryViewAngle: 360
+  sentryViewAngle: 240

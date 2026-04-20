@@ -469,7 +469,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!136 &312265643
@@ -492,9 +492,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.5
-  m_Height: 1.8994405
+  m_Height: 2.0456624
   m_Direction: 1
-  m_Center: {x: 0, y: 0.9527825, z: 0}
+  m_Center: {x: 0, y: 0.8796716, z: 0}
 --- !u!4 &312265644 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4339348627803264028, guid: 1d18f2757d70d6546af90938dbbc1d98, type: 3}
@@ -509,8 +509,8 @@ Animator:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 312265639}
   m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
+  m_Avatar: {fileID: 9000000, guid: 2d4e58e6846a7a24e8355d73f7e6d0d3, type: 3}
+  m_Controller: {fileID: 9100000, guid: d82f8b7f0c7e121458f5332120aa973d, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -818,7 +818,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3271290411826984357, guid: 67e65e2ad8291284d839185b86dee2d0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.85000044
+      value: 1.97
       objectReference: {fileID: 0}
     - target: {fileID: 3271290411826984357, guid: 67e65e2ad8291284d839185b86dee2d0, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1424,6 +1424,30 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 441490017760075656, guid: 1d18f2757d70d6546af90938dbbc1d98, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 441490017760075656, guid: 1d18f2757d70d6546af90938dbbc1d98, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 441490017760075656, guid: 1d18f2757d70d6546af90938dbbc1d98, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 441490017760075656, guid: 1d18f2757d70d6546af90938dbbc1d98, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 441490017760075656, guid: 1d18f2757d70d6546af90938dbbc1d98, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 441490017760075656, guid: 1d18f2757d70d6546af90938dbbc1d98, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3995720064970690214, guid: 1d18f2757d70d6546af90938dbbc1d98, type: 3}
       propertyPath: m_Name
       value: SK_SciFiTrooperManV3 Variant
@@ -1434,7 +1458,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4339348627803264028, guid: 1d18f2757d70d6546af90938dbbc1d98, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.8500004
+      value: 0.885
       objectReference: {fileID: 0}
     - target: {fileID: 4339348627803264028, guid: 1d18f2757d70d6546af90938dbbc1d98, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1509,7 +1533,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3271290411826984357, guid: 67e65e2ad8291284d839185b86dee2d0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.8500011
+      value: 1.938
       objectReference: {fileID: 0}
     - target: {fileID: 3271290411826984357, guid: 67e65e2ad8291284d839185b86dee2d0, type: 3}
       propertyPath: m_LocalPosition.z

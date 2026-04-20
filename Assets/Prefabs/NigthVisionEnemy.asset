@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   enemyTypeName: NightVision
   canSeeInShadows: 1
-  closeDetectionRange: 3
+  closeDetectionRange: 1
   requiresLineOfSight: 1
   requiresAngleCheck: 1
   requiresRangeCheck: 1
@@ -25,7 +25,7 @@ MonoBehaviour:
   canPursue: 1
   searchDuration: 5
   visionLightColor: {r: 0.17954996, g: 1, b: 0.015686274, a: 1}
-  lightIntensity: 3
+  lightIntensity: 10
   showVisionLight: 1
   isSentry: 0
   sentryRotationSpeed: 2

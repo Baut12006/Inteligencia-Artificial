@@ -1,9 +1,10 @@
 using UnityEngine;
 
-public class PlayerView : MonoBehaviour
+public class EnemyView : MonoBehaviour
 {
     [SerializeField] private Animator anim;
     [SerializeField] private Rigidbody rb;
+
     private void Awake()
     {
         anim = GetComponent<Animator>();

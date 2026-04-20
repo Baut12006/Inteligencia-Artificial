@@ -22,10 +22,13 @@ public class EnemyController : MonoBehaviour
     private float waypointReachedDistanceSqr = 0.25f;
     private float closeDetectionRangeSqr;
     private float searchTimer = 0f;
+    private bool isDead = false;
 
     [Header("Light Culling")]
     private Color originalLightColor;
     [SerializeField] private float lightCullingDistance = 30f;
+
+    public bool IsDead => isDead;
 
     void Awake()
     {
@@ -56,7 +59,9 @@ public class EnemyController : MonoBehaviour
 
     void SetupVisionLight()
     {
-        originalLightColor = config.visionLightColor;
+        if (config != null)
+            originalLightColor = config.visionLightColor;
+
         if (config == null || !config.showVisionLight)
             return;
 
@@ -94,7 +99,10 @@ public class EnemyController : MonoBehaviour
 
     void Update()
     {
-        if (config == null || player == null || playerModel == null)
+        if (isDead || config == null || player == null || playerModel == null)
+            return;
+
+        if (playerModel.IsDead)
             return;
 
         UpdateLightVisibility();
@@ -120,6 +128,48 @@ public class EnemyController : MonoBehaviour
         fsm.UpdateState(canSeePlayer, config.isSentry);
 
         ExecuteState();
+    }                       
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if (isDead) return;
+
+        PlayerModel player = collision.gameObject.GetComponent<PlayerModel>();
+        if (player != null && !player.IsDead)
+        {
+            if (CombatHelper.IsAttackFromBehind(transform, player.transform))
+            {
+                Debug.Log($"{config.enemyTypeName} killed player from behind!");
+                player.Die();
+            }
+            else
+            {
+                Debug.Log($"Player killed {config.enemyTypeName}!");
+                Die();
+            }
+        }
+    }
+
+    public void Die()
+    {
+        if (isDead) return;
+
+        isDead = true;
+        Debug.Log($"{config.enemyTypeName} died!");
+
+        if (rb != null)
+            rb.linearVelocity = Vector3.zero;
+
+        if (visionLight != null)
+            visionLight.enabled = false;
+
+        if (fsm != null)
+            enabled = false;
+
+        // TODO: Agregar animación de muerte
+        // TODO: Desactivar o destruir después de X segundos
+        
+        Destroy(gameObject, 2f);
     }
 
     bool CheckNormalVision()
@@ -150,6 +200,7 @@ public class EnemyController : MonoBehaviour
         bool shadowCheck = config.canSeeInShadows || !playerModel.IsInShadow;
         return (normalVision && shadowCheck) || isCloseEnough;
     }
+
     void UpdateLightColor()
     {
         if (visionLight == null || config == null) return;
@@ -163,6 +214,7 @@ public class EnemyController : MonoBehaviour
             visionLight.color = originalLightColor;
         }
     }
+
     void ExecuteState()
     {
         UpdateLightColor();
@@ -286,8 +338,11 @@ public class EnemyController : MonoBehaviour
             );
         }
     }
+
     public void ReceiveAlert(Vector3 alertPosition)
     {
+        if (isDead) return;
+
         lastKnownPosition = alertPosition;
         searchTimer = config.searchDuration;
 
@@ -296,6 +351,7 @@ public class EnemyController : MonoBehaviour
             fsm.currentState = FSM.EnemyState.Search;
         }
     }
+
     void AlertNearbyEnemies()
     {
         Collider[] hits = Physics.OverlapSphere(transform.position, alertRadius);
@@ -304,7 +360,7 @@ public class EnemyController : MonoBehaviour
         {
             EnemyController enemy = hit.GetComponent<EnemyController>();
 
-            if (enemy != null && enemy != this)
+            if (enemy != null && enemy != this && !enemy.IsDead)
             {
                 enemy.ReceiveAlert(lastKnownPosition);
             }
@@ -340,8 +396,15 @@ public class EnemyController : MonoBehaviour
         if (config == null)
             return;
 
-        Gizmos.color = Color.red;
+        Color gizmoColor = isDead ? Color.gray : Color.red;
+        Gizmos.color = gizmoColor;
         Gizmos.DrawWireSphere(transform.position, config.closeDetectionRange);
+
+        if (!isDead && Application.isPlaying)
+        {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(transform.position, transform.position + transform.forward * 2f);
+        }
 
         if (patrolRoute != null && patrolRoute.WaypointCount > 0 && !config.isSentry)
         {
