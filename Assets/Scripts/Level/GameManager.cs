@@ -24,6 +24,7 @@ public class GameManager : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private GameObject deathPanel;
     [SerializeField] private GameObject victoryPanel;
+    [SerializeField] private GameObject introPanel;
 
     [Header("Game Objects")]
     [SerializeField] private PlayerModel player;
@@ -33,6 +34,9 @@ public class GameManager : MonoBehaviour
     private bool isGameOver = false;
     private int totalEnemies = 0;
     private int enemiesKilled = 0;
+    private bool gameStarted = false;
+
+    private static bool hasSeenIntro = false;
 
     public bool IsGameOver => isGameOver;
     public int EnemiesRemaining => totalEnemies - enemiesKilled;
@@ -54,6 +58,18 @@ public class GameManager : MonoBehaviour
 
         if (victoryPanel != null)
             victoryPanel.SetActive(false);
+
+        if (introPanel != null)
+        {
+            if (!hasSeenIntro)
+            {
+                introPanel.SetActive(true);
+            }
+            else
+            {
+                introPanel.SetActive(false);
+            }
+        }
     }
 
     void Start()
@@ -76,13 +92,36 @@ public class GameManager : MonoBehaviour
         {
             exitDoor.LockDoor();
         }
+
+        if (introPanel != null && introPanel.activeSelf)
+        {
+            Time.timeScale = 0f;
+        }
+        else
+        {
+            Time.timeScale = 1f;
+        }
     }
 
     void CountTotalEnemies()
     {
         EnemyController[] enemies = FindObjectsByType<EnemyController>(FindObjectsSortMode.None);
         totalEnemies = enemies.Length;
-        Debug.Log($"Total enemies in level: {totalEnemies}");
+        //Debug.Log($"Total enemies in level: {totalEnemies}");
+    }
+
+    public void StartGame()
+    {
+        if (introPanel != null)
+        {
+            introPanel.SetActive(false);
+        }
+
+        hasSeenIntro = true;
+        Time.timeScale = 1f;
+        gameStarted = true;
+
+        //Debug.Log("Game started!");
     }
 
     public void OnPlayerDeath()
@@ -90,7 +129,7 @@ public class GameManager : MonoBehaviour
         if (isGameOver) return;
 
         isGameOver = true;
-        Debug.Log("Player died! Game Over!");
+        //Debug.Log("Player died! Game Over!");
 
         if (deathPanel != null)
         {
@@ -105,7 +144,7 @@ public class GameManager : MonoBehaviour
         if (isGameOver) return;
 
         enemiesKilled++;
-        Debug.Log($"Enemy killed! {enemiesKilled}/{totalEnemies}");
+        //Debug.Log($"Enemy killed! {enemiesKilled}/{totalEnemies}");
 
         if (enemiesKilled >= totalEnemies)
         {
@@ -115,7 +154,7 @@ public class GameManager : MonoBehaviour
 
     void OnAllEnemiesDefeated()
     {
-        Debug.Log("All enemies defeated! Exit door unlocked!");
+        //Debug.Log("All enemies defeated! Exit door unlocked!");
 
         if (exitDoor != null)
         {
@@ -128,7 +167,7 @@ public class GameManager : MonoBehaviour
         if (isGameOver) return;
 
         isGameOver = true;
-        Debug.Log("Player reached exit! Victory!");
+        //Debug.Log("Player reached exit! Victory!");
 
         if (victoryPanel != null)
         {
@@ -144,28 +183,11 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    public void LoadNextLevel()
+    public void GoToMenu()
     {
         Time.timeScale = 1f;
-        int nextSceneIndex = SceneManager.GetActiveScene().buildIndex + 1;
-
-        if (nextSceneIndex < SceneManager.sceneCountInBuildSettings)
-        {
-            SceneManager.LoadScene(nextSceneIndex);
-        }
-        else
-        {
-            Debug.Log("No more levels! Restarting from first level.");
-            SceneManager.LoadScene(0);
-        }
-    }
-
-    public void QuitGame()
-    {
-        Time.timeScale = 1f;
-        Debug.Log("Quitting game...");
-        Application.Quit();
-
+        hasSeenIntro = false;
+        SceneManager.LoadScene(0);
     }
 
     void OnDestroy()

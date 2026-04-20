@@ -50,11 +50,37 @@ public class EnemyController : MonoBehaviour
         }
 
         SetupVisionLight();
-        
+
         if (config != null && config.isSentry)
         {
             SetupSentryVision();
         }
+
+        FindClosestWaypoint();
+    }
+
+    void FindClosestWaypoint()
+    {
+        if (config == null || config.isSentry || patrolRoute == null || patrolRoute.WaypointCount == 0)
+            return;
+
+        float closestDistanceSqr = float.MaxValue;
+        int closestIndex = 0;
+
+        for (int i = 0; i < patrolRoute.WaypointCount; i++)
+        {
+            Vector3 waypoint = patrolRoute.GetWaypoint(i);
+            float distanceSqr = (transform.position - waypoint).sqrMagnitude;
+
+            if (distanceSqr < closestDistanceSqr)
+            {
+                closestDistanceSqr = distanceSqr;
+                closestIndex = i;
+            }
+        }
+
+        currentPoint = closestIndex;
+        //Debug.Log($"{config.enemyTypeName} starting at waypoint {currentPoint} (closest to spawn position)");
     }
 
     void SetupVisionLight()
@@ -71,7 +97,7 @@ public class EnemyController : MonoBehaviour
             lightObj.transform.SetParent(transform);
             lightObj.transform.localPosition = Vector3.zero;
             lightObj.transform.localRotation = Quaternion.Euler(90, 0, 0);
-            
+
             visionLight = lightObj.AddComponent<Light>();
         }
 
@@ -81,11 +107,11 @@ public class EnemyController : MonoBehaviour
         visionLight.intensity = config.lightIntensity;
         visionLight.color = config.visionLightColor;
         visionLight.enabled = true;
-        
+
         visionLight.shadows = LightShadows.None;
         visionLight.renderMode = LightRenderMode.ForcePixel;
         visionLight.cullingMask = LayerMask.GetMask("Default");
-        
+
         visionLight.innerSpotAngle = visionLight.spotAngle * 0.8f;
     }
 
@@ -108,7 +134,7 @@ public class EnemyController : MonoBehaviour
         UpdateLightVisibility();
 
         float sqrDistanceToPlayer = (transform.position - player.position).sqrMagnitude;
-        
+
         bool normalVision = CheckNormalVision();
         bool isCloseEnough = sqrDistanceToPlayer <= closeDetectionRangeSqr;
 
@@ -128,23 +154,23 @@ public class EnemyController : MonoBehaviour
         fsm.UpdateState(canSeePlayer, config.isSentry);
 
         ExecuteState();
-    }                       
+    }
 
-    void OnCollisionEnter(Collision collision)
+    void OnTriggerEnter(Collider other)
     {
         if (isDead) return;
 
-        PlayerModel player = collision.gameObject.GetComponent<PlayerModel>();
+        PlayerModel player = other.GetComponent<PlayerModel>();
         if (player != null && !player.IsDead)
         {
             if (CombatHelper.IsAttackFromBehind(transform, player.transform))
             {
-                Debug.Log($"{config.enemyTypeName} killed player from behind!");
+                //Debug.Log($"{config.enemyTypeName} killed player from behind!");
                 player.Die();
             }
             else
             {
-                Debug.Log($"Player killed {config.enemyTypeName}!");
+                //Debug.Log($"Player killed {config.enemyTypeName}!");
                 Die();
             }
         }
@@ -155,7 +181,7 @@ public class EnemyController : MonoBehaviour
         if (isDead) return;
 
         isDead = true;
-        Debug.Log($"{config.enemyTypeName} died!");
+        //Debug.Log($"{config.enemyTypeName} died!");
 
         if (rb != null)
         {
@@ -173,7 +199,7 @@ public class EnemyController : MonoBehaviour
         {
             GameManager.Instance.OnEnemyKilled();
         }
-    
+
         Destroy(gameObject);
     }
 
@@ -378,7 +404,7 @@ public class EnemyController : MonoBehaviour
 
         rb.linearVelocity = new Vector3(
             moveDir.x * moveSpeed,
-            rb.linearVelocity.y, 
+            rb.linearVelocity.y,
             moveDir.z * moveSpeed
         );
 

@@ -25,7 +25,7 @@ MonoBehaviour:
   canPursue: 1
   searchDuration: 5
   visionLightColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  lightIntensity: 10
+  lightIntensity: 100
   showVisionLight: 1
   isSentry: 0
   sentryRotationSpeed: 2

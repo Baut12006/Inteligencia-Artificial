@@ -39,12 +39,12 @@ public class PlayerModel : MonoBehaviour
         {
             if (CombatHelper.IsAttackFromBehind(transform, enemy.transform))
             {
-                Debug.Log("Player killed enemy from behind!");
+                //Debug.Log("Player killed enemy from behind!");
                 enemy.Die();
             }
             else
             {
-                Debug.Log("Enemy killed player!");
+                //Debug.Log("Enemy killed player!");
                 Die();
             }
         }
@@ -55,7 +55,7 @@ public class PlayerModel : MonoBehaviour
         if (isDead) return;
 
         isDead = true;
-        Debug.Log("Player died!");
+        //Debug.Log("Player died!");
         
         rb.linearVelocity = Vector3.zero;
 
@@ -71,7 +71,7 @@ public class PlayerModel : MonoBehaviour
         if ((shadowLayer & (1 << other.gameObject.layer)) != 0)
         {
             shadowCounter++;
-            Debug.Log("Entered Shadow | Count: " + shadowCounter);
+            //Debug.Log("Entered Shadow | Count: " + shadowCounter);
         }
     }
 
@@ -84,7 +84,7 @@ public class PlayerModel : MonoBehaviour
             if (shadowCounter < 0)
                 shadowCounter = 0;
 
-            Debug.Log("Exited Shadow | Count: " + shadowCounter);
+            //Debug.Log("Exited Shadow | Count: " + shadowCounter);
         }
     }
 
