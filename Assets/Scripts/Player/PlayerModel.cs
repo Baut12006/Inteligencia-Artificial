@@ -58,10 +58,12 @@ public class PlayerModel : MonoBehaviour
         Debug.Log("Player died!");
         
         rb.linearVelocity = Vector3.zero;
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnPlayerDeath();
+        }
         
-        // TODO: Agregar animación de muerte
-        // TODO: Mostrar Game Over screen
-        // TODO: Reiniciar nivel
     }
 
     private void OnTriggerEnter(Collider other)

@@ -158,18 +158,23 @@ public class EnemyController : MonoBehaviour
         Debug.Log($"{config.enemyTypeName} died!");
 
         if (rb != null)
+        {
             rb.linearVelocity = Vector3.zero;
-
+        }
         if (visionLight != null)
+        {
             visionLight.enabled = false;
-
+        }
         if (fsm != null)
+        {
             enabled = false;
-
-        // TODO: Agregar animación de muerte
-        // TODO: Desactivar o destruir después de X segundos
-        
-        Destroy(gameObject, 2f);
+        }
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnEnemyKilled();
+        }
+    
+        Destroy(gameObject);
     }
 
     bool CheckNormalVision()
@@ -371,8 +376,11 @@ public class EnemyController : MonoBehaviour
     {
         Vector3 moveDir = dir.normalized;
 
-        Vector3 newPosition = rb.position + moveDir * moveSpeed * Time.deltaTime;
-        rb.MovePosition(newPosition);
+        rb.linearVelocity = new Vector3(
+            moveDir.x * moveSpeed,
+            rb.linearVelocity.y, 
+            moveDir.z * moveSpeed
+        );
 
         Vector3 newForward = Vector3.Lerp(
             transform.forward,
