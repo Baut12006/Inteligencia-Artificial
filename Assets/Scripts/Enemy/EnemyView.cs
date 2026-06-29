@@ -11,7 +11,6 @@ public class EnemyView : MonoBehaviour
         rb = GetComponent<Rigidbody>();
     }
 
-    // Update is called once per frame
     void Update()
     {
         anim.SetFloat("Speed", rb.linearVelocity.magnitude * 2f);
